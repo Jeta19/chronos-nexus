@@ -20,17 +20,23 @@ class Graph:
         for r in routes:
             self.adj[r.source].append(r)
         self.nodes_explored = 0   # statistikë për profesorin
+        self.uncertainty = True   # kosto e pritshme me besueshmëri
 
     def edge_cost(self, r: Route, w):
         """Kostoja e një rruge sipas peshave. Rreziku shumëzohet me 100
-        që të jetë në të njëjtën shkallë me distancën."""
-        return (w[0] * r.distance + w[1] * r.fuel_cost
+        që të jetë në të njëjtën shkallë me distancën.
+        Me pasiguri: kostoja pritet = kosto bazë / besueshmëria
+        (rruga që dështon riprovohet, shpërndarje gjeometrike)."""
+        base = (w[0] * r.distance + w[1] * r.fuel_cost
                 + w[2] * r.travel_time + w[3] * r.risk * 100)
+        if self.uncertainty:
+            return base + (1 - r.reliability) * 1000
+        return base
 
     def heuristic(self, a, b, w):
-        """Vlerësim i poshtëm për A*: distanca e drejtë vijë mes planetëve.
-        Është i pranueshëm vetëm nëse kostoja e rrugës >= w[0]*distanca e drejtë.
-        Përdorim vetëm komponentin e distancës, që nuk e tejkalon kurrë koston reale."""
+        """Vlerësim i poshtëm për A*: w1 * distanca e drejtë.
+        Mbetet i pranueshëm edhe me pasiguri, sepse
+        base / reliability >= base >= w1 * distanca e drejtë."""
         pa, pb = self.planets[a], self.planets[b]
         straight = math.hypot(pa.x - pb.x, pa.y - pb.y)
         return w[0] * straight

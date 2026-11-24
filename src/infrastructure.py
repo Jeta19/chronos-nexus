@@ -1,13 +1,17 @@
+import math
+
+
 def knapsack_dp(facilities, budget, unit=10):
     """0/1 Knapsack me Dynamic Programming.
 
-    Kostot rrumbullakohen te 'unit' për ta mbajtur tabelën të vogël.
+    Kostot rrumbullakohen LART (ceil) te 'unit', kështu kostoja reale nuk e kalon
+    kurrë buxhetin. Çmimi: vlera mund të dalë pak nën optimumin e saktë.
     Kompleksiteti: O(n * B/unit) kohë, O(n * B/unit) memorie (për rindërtim).
     Kthen (vlera_totale, kosto_totale, lista_e_zgjedhur).
     """
     n = len(facilities)
     cap = int(budget // unit)
-    costs = [max(1, int(round(f.cost / unit))) for f in facilities]
+    costs = [max(1, int(math.ceil(f.cost / unit))) for f in facilities]
 
     # dp[i][c] = vlera më e mirë me objektet e para i dhe buxhet c
     dp = [[0.0] * (cap + 1) for _ in range(n + 1)]

@@ -10,6 +10,9 @@ WEIGHTS = {
     "balanced":  (0.25, 0.25, 0.25, 0.25),
 }
 
+# Kostoja e supozuar e një dështimi të rrugës (humbje ngarkese dhe riprovë)
+FAILURE_COST = 1000
+
 
 class Graph:
     def __init__(self, planets, routes):
@@ -19,24 +22,24 @@ class Graph:
         self.adj = [[] for _ in range(self.n)]
         for r in routes:
             self.adj[r.source].append(r)
-        self.nodes_explored = 0   # statistikë për profesorin
-        self.uncertainty = True   # kosto e pritshme me besueshmëri
+        self.nodes_explored = 0   # statistikë: sa nyje janë eksploruar gjithsej
+        self.uncertainty = True   # kosto e pritshme me probabilitet dështimi
 
     def edge_cost(self, r: Route, w):
-        """Kostoja e një rruge sipas peshave. Rreziku shumëzohet me 100
-        që të jetë në të njëjtën shkallë me distancën.
-        Me pasiguri: kostoja pritet = kosto bazë / besueshmëria
-        (rruga që dështon riprovohet, shpërndarje gjeometrike)."""
+        """Kostoja e një rruge sipas peshave w = (w1, w2, w3, w4).
+        Rreziku shumëzohet me 100 që të jetë në të njëjtën shkallë me distancën.
+        Me pasiguri: kostoja = kosto bazë + (1 - besueshmëria) * FAILURE_COST,
+        pra kostoja e pritshme e dështimit."""
         base = (w[0] * r.distance + w[1] * r.fuel_cost
                 + w[2] * r.travel_time + w[3] * r.risk * 100)
         if self.uncertainty:
-            return base + (1 - r.reliability) * 1000
+            return base + (1 - r.reliability) * FAILURE_COST
         return base
 
     def heuristic(self, a, b, w):
         """Vlerësim i poshtëm për A*: w1 * distanca e drejtë.
-        Mbetet i pranueshëm edhe me pasiguri, sepse
-        base / reliability >= base >= w1 * distanca e drejtë."""
+        Mbetet i pranueshëm edhe me pasiguri, sepse penaliteti i dështimit
+        është >= 0, pra kostoja >= base >= w1 * distanca e drejtë."""
         pa, pb = self.planets[a], self.planets[b]
         straight = math.hypot(pa.x - pb.x, pa.y - pb.y)
         return w[0] * straight
